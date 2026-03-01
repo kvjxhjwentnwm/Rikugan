@@ -2,18 +2,18 @@
 
 An IDA Pro plugin that integrates a multi-provider LLM agent as a first-class reverse engineering companion. Iris provides an agentic loop with streaming, 57 purpose-built IDA tools, 7 built-in analysis skills, MCP client, and a native Qt chat panel, all accessible through a single hotkey.
 
-This project was done together with my friend, Claude code.
+This project was done together with my friend, Claude Code.
 
 
 ## Is this another MCP client?
 
-No, Iris is an agent built to live inside IDA Pro. It does not consume an MCP server to interact with IDA, it has its own agentic loop, context management, and tool orchestration layer running entirely in-process. 
+No, Iris is an agent built to live inside IDA Pro. It does not consume an MCP server to interact with IDA — it has its own agentic loop, context management, and tool orchestration layer running entirely in-process.
 
-The agent loop is a generator-based turn cycle: each user message kicks off a stream->execute->repeat pipeline where the LLM response is streamed token-by-token, tool calls are intercepted and dispatched. 
+The agent loop is a generator-based turn cycle: each user message kicks off a stream→execute→repeat pipeline where the LLM response is streamed token-by-token, tool calls are intercepted and dispatched.
 
-The results are fed back as the next turn's context. It supports automatic error recovery, mid-run user questions, plan mode for multi-step workflows, and message queuing, all without leaving IDA.
+The results are fed back as the next turn's context. It supports automatic error recovery, mid-run user questions, plan mode for multi-step workflows, and message queuing — all without leaving IDA.
 
-The agent really ***lives*** and ***breath*** reversing.
+The agent really ***lives*** and ***breathes*** reversing.
 
 Advantages:
 
@@ -129,7 +129,15 @@ Skills are reusable analysis workflows. Type `/` in the input area to see availa
 | `/ctf` | Capture-the-flag — find the flag efficiently |
 | `/generic-re` | General-purpose binary analysis |
 
-**User skills:** Create custom skills in `~/.iris/skills/<slug>/SKILL.md`. User skills with the same slug override built-in ones.
+**User skills:** Create custom skills in `~/.idapro/iris/skills/<slug>/SKILL.md`. Each skill lives in its own subdirectory — the directory name is the slug you type after `/`. User skills with the same slug override built-in ones.
+
+```
+~/.idapro/iris/skills/
+  my-skill/
+    SKILL.md            # required — frontmatter + prompt body
+    references/         # optional — .md files appended to the prompt
+      api-notes.md
+```
 
 Skill format:
 ```markdown
@@ -137,6 +145,7 @@ Skill format:
 name: My Custom Skill
 description: What it does in one line
 tags: [analysis, custom]
+allowed_tools: [decompile_function, rename_function]
 ---
 Task: <instruction for the agent>
 
@@ -144,9 +153,11 @@ Task: <instruction for the agent>
 ...
 ```
 
+The `allowed_tools` field is optional — when set, the agent can only use those tools while the skill is active.
+
 ### MCP Servers
 
-Connect external MCP servers to extend Iris with additional tools. Configure in `~/.iris/mcp.json`:
+Connect external MCP servers to extend Iris with additional tools. Create the config file at `~/.idapro/iris/mcp.json`:
 
 ```json
 {
@@ -161,7 +172,7 @@ Connect external MCP servers to extend Iris with additional tools. Configure in 
 }
 ```
 
-MCP tools appear alongside built-in tools with the prefix `mcp_<server>_<tool>`. The agent sees them in the tool list and can call them like any other tool.
+MCP servers are started when the plugin loads. Their tools appear alongside built-in ones with the prefix `mcp_<server>_<tool>` — the agent sees them in the tool list and can call them like any other tool. Set `"enabled": false` to keep a server configured without starting it.
 
 ## Tools
 
