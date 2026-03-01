@@ -7,11 +7,11 @@ This project was done together with my friend, Claude Code.
 
 ## Is this another MCP client?
 
-No, Iris is an agent built to live inside IDA Pro. It does not consume an MCP server to interact with IDA — it has its own agentic loop, context management, and tool orchestration layer running entirely in-process.
+No, Iris is an agent built to live inside IDA Pro. It does not consume an MCP server to interact with IDA, it has its own agentic loop, context management, it's own role (you can check it [here](iris/agent/system_prompt.py) ) and tool orchestration layer running entirely in-process.
 
 The agent loop is a generator-based turn cycle: each user message kicks off a stream→execute→repeat pipeline where the LLM response is streamed token-by-token, tool calls are intercepted and dispatched.
 
-The results are fed back as the next turn's context. It supports automatic error recovery, mid-run user questions, plan mode for multi-step workflows, and message queuing — all without leaving IDA.
+The results are fed back as the next turn's context. It supports automatic error recovery, mid-run user questions, plan mode for multi-step workflows, and message queuing, all without leaving IDA.
 
 The agent really ***lives*** and ***breathes*** reversing.
 
@@ -117,19 +117,7 @@ Right-click in the disassembly or pseudocode view:
 
 Skills are reusable analysis workflows. Type `/` in the input area to see available skills with autocomplete.
 
-**Built-in skills:**
-
-| Skill | Description |
-|-------|-------------|
-| `/malware-analysis` | Windows PE malware — kill chain, IOC extraction, MITRE ATT&CK mapping |
-| `/linux-malware` | ELF malware — packing detection, persistence, IOC extraction |
-| `/deobfuscation` | String decryption, CFF removal, opaque predicates, MBA simplification, microcode cleaning |
-| `/driver-analysis` | Windows kernel drivers — DriverEntry, dispatch table, IOCTL handlers |
-| `/vuln-audit` | Buffer overflows, format strings, integer issues, memory safety |
-| `/ctf` | Capture-the-flag — find the flag efficiently |
-| `/generic-re` | General-purpose binary analysis |
-
-**User skills:** Create custom skills in `~/.idapro/iris/skills/<slug>/SKILL.md`. Each skill lives in its own subdirectory — the directory name is the slug you type after `/`. User skills with the same slug override built-in ones.
+Create custom skills in `~/.idapro/iris/skills/<slug>/SKILL.md`. Each skill lives in its own subdirectory.
 
 ```
 ~/.idapro/iris/skills/
@@ -192,4 +180,51 @@ MCP servers are started when the plugin loads. Their tools appear alongside buil
 | **Microcode** | `get_microcode`, `get_microcode_block`, `nop_microcode`, `install_microcode_optimizer`, `remove_microcode_optimizer`, `list_microcode_optimizers`, `redecompile_function` |
 | **Scripting** | `execute_python` (last resort — the agent prefers built-in tools) |
 
-Decompiler and microcode tools require Hex-Rays. If unavailable, they return an error and all other tools continue to work.
+
+## Examples
+
+Here's some practical and cool examples with Iris:
+
+### Removing junk code 
+
+### Solving CTF's
+
+Testing against Flare-On's 2025 challeng 7: "[The Boss Needs Help](https://attachments-us-west-2.insided.com/7b772344-fabe-4978-9776-4a4b34d2ba67/7_%20The%20Boss%20Needs%20Help.pdf?Expires=1772357715&Signature=ilnXKZgpMaTBce5EfgI~OxlXNrsSAhHgtVaJU~ZAOfsmBzF5~O3Wkmgl6tRgQqeXlMhyMC3YSgAqdE33fS3azduoKngCnSq4-~fMOLb6A~BN6ReW8xomVaAmcj6GtnkSDlHpObjitsOObTAG2dZOm0bfCG2kkpaYm0LbcRulw5luXn7sOazQs~Q0uQ2o~AGTTwwqMQ6dTzWNMABkoAxbEzNEgtDLQYcWN7dRLSigh2dfA~IvtK9DXsfrPcBNmLN4Wbug8YTRb3R0SgFsDBGFo0GMDhF-bQbeNQqCjcBgG~LFPyigvnfs5nleYjE2WWpZxOtFrDFa~FLWB6-hMm6AwQ__&Key-Pair-Id=APKAJODP2KXSV47YM4AA)"
+
+![alt text](image.png)
+
+Chat:
+
+```
+User: This is a CTF challenge, all functions are too big to read, can you identify how the obfuscation works ? dont read everything, otherwise you'll run out of tokens
+```
+
+Iris:
+```
+...(picture above)
+
+
+Only 3 long forward jumps — these are the real branching points (e.g., jnz loc_140213B75 skipping ~11KB, which corresponds to a major if/else for input validation)
+Only 2 unconditional jumps (one is a 4-byte nop-skip)
+
+
+The entire main function (109KB, 23,545 instructions) is completely linear — no loops, no backward edges. The program logic has been unrolled and flattened into a single straight-line sequence with the MBA chains acting as opaque computations between the small conditional blocks.
+
+
+3. How the Real Logic Hides
+
+The actual program logic is buried in:
+
+35 call instructions — the real functionality (memory allocation, string comparison sub_140081590 at 336KB, I/O, etc.)
+The short conditional jumps — these encode the actual comparisons/decisions but are drowned in MBA noise
+Register constant loads (mov esi, 654213BBh; mov r12d, 0D9DA45AEh...) — 5 registers loaded with constants at branch points, likely encoding state for subsequent MBA chains
+
+Want me to try to isolate the actual logic by filtering out the MBA noise, or focus on the string comparison function (sub_140081590)?
+```
+
+```
+User: remove all the junk and clean the function, identify the pattern and remove it
+```
+
+### Batch renaming
+

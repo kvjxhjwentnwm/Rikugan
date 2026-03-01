@@ -114,6 +114,7 @@ class SettingsDialog(QDialog):
         self._fetched_models: List[ModelInfo] = []
         self._resolved_token: str = ""
         self._shown = False
+        self._closed = False
         self.setWindowTitle("IRIS Settings")
         self.setMinimumWidth(500)
         self._build_ui()
@@ -122,6 +123,12 @@ class SettingsDialog(QDialog):
         self._poll_timer = QTimer(self)
         self._poll_timer.timeout.connect(self._poll_fetcher)
         self._poll_timer.start(150)
+
+        # Deferred init timer — parented to self, safe if dialog closes instantly
+        self._init_timer = QTimer(self)
+        self._init_timer.setSingleShot(True)
+        self._init_timer.setInterval(0)
+        self._init_timer.timeout.connect(self._deferred_init)
 
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
@@ -240,10 +247,12 @@ class SettingsDialog(QDialog):
             self._shown = True
             # Defer auth resolution and model fetch to AFTER the dialog is painted.
             # This avoids subprocess.run() and background threads during construction.
-            QTimer.singleShot(0, self._deferred_init)
+            self._init_timer.start()
 
     def _deferred_init(self) -> None:
         """Runs after the dialog is fully painted. Safe for subprocesses/threads."""
+        if self._closed:
+            return
         try:
             self._update_auth_status()
             self._fetch_models()
@@ -253,7 +262,9 @@ class SettingsDialog(QDialog):
     # --- Cleanup ---
 
     def done(self, result: int) -> None:
+        self._closed = True
         try:
+            self._init_timer.stop()
             self._poll_timer.stop()
         except RuntimeError:
             pass  # timer already destroyed during Qt cleanup  # noqa: S110
@@ -264,6 +275,8 @@ class SettingsDialog(QDialog):
 
     def _poll_fetcher(self) -> None:
         """Poll the fetcher queue from the main thread. Safe for Shiboken."""
+        if self._closed:
+            return
         result = self._fetcher.poll()
         if result is None:
             return
@@ -372,8 +385,11 @@ class SettingsDialog(QDialog):
                 self._model_combo.setCurrentIndex(i)
                 matched = True
                 break
-        if not matched:
-            self._model_combo.setCurrentText(current_id)
+        if not matched and models:
+            # If the previous model ID doesn't match any fetched model
+            # (e.g. stale error text, wrong provider), select the first one
+            # instead of keeping garbage text in the editable combo.
+            self._model_combo.setCurrentIndex(0)
 
         self._model_status.setText(f"{len(models)} models")
         self._model_status.setStyleSheet("color: #4ec9b0; font-size: 10px;")

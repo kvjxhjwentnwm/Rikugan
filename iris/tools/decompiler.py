@@ -6,7 +6,7 @@ import importlib
 from typing import Annotated
 
 from ..core.errors import ToolError
-from .base import tool
+from .base import parse_addr, tool
 
 _HAS_HEXRAYS = False
 try:
@@ -33,7 +33,7 @@ def _decompile(ea: int):
 @tool(category="decompiler", requires_decompiler=True)
 def decompile_function(address: Annotated[str, "Function address (hex string)"]) -> str:
     """Decompile the function at the given address and return pseudocode."""
-    result = _decompile(int(address, 0))
+    result = _decompile(parse_addr(address))
     return result if isinstance(result, str) else str(result)
 
 
@@ -43,7 +43,7 @@ def get_pseudocode(
     with_line_numbers: Annotated[bool, "Include line numbers"] = True,
 ) -> str:
     """Get the pseudocode of a function with optional line numbers."""
-    result = _decompile(int(address, 0))
+    result = _decompile(parse_addr(address))
     if isinstance(result, str):
         return result
 
@@ -61,7 +61,7 @@ def get_pseudocode(
 @tool(category="decompiler", requires_decompiler=True)
 def get_decompiler_variables(address: Annotated[str, "Function address (hex string)"]) -> str:
     """List local variables from the decompiler output."""
-    result = _decompile(int(address, 0))
+    result = _decompile(parse_addr(address))
     if isinstance(result, str):
         return result
 

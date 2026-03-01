@@ -7,7 +7,7 @@ import json
 from typing import Annotated, List, Optional
 
 from ..core.errors import ToolError
-from .base import tool
+from .base import parse_addr, tool
 
 _HAS_HEXRAYS = False
 try:
@@ -372,7 +372,7 @@ def apply_struct_to_address(
 ) -> str:
     """Apply a struct type at a data address."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     sid = ida_struct.get_struc_id(struct_name)
     if sid == idc.BADADDR:
         return f"Struct '{struct_name}' not found"
@@ -395,7 +395,7 @@ def apply_type_to_variable(
     if not _HAS_HEXRAYS:
         return "Hex-Rays not available"
 
-    ea = int(func_address, 0)
+    ea = parse_addr(func_address)
     try:
         cfunc = ida_hexrays.decompile(ea)
     except Exception as e:
@@ -422,7 +422,7 @@ def set_function_prototype(
 ) -> str:
     """Set a function's full calling convention and prototype."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     ok = idc.SetType(ea, prototype)
     if ok:
         return f"Set prototype at 0x{ea:x}: {prototype}"
@@ -453,7 +453,7 @@ def suggest_struct_from_accesses(
     if not _HAS_HEXRAYS:
         return "Hex-Rays not available"
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     try:
         cfunc = ida_hexrays.decompile(ea)
     except Exception as e:

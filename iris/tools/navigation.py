@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 from typing import Annotated, Optional
 
-from .base import tool
+from .base import parse_addr, tool
 
 
 try:
@@ -49,7 +49,7 @@ def get_current_function() -> str:
 def jump_to(address: Annotated[str, "Address to jump to (hex string, e.g. '0x401000')"]) -> str:
     """Jump the IDA disassembly view to the specified address."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     success = ida_kernwin.jumpto(ea)
     if success:
         return f"Jumped to 0x{ea:x}"
@@ -60,7 +60,7 @@ def jump_to(address: Annotated[str, "Address to jump to (hex string, e.g. '0x401
 def get_name_at(address: Annotated[str, "Address to query (hex string)"]) -> str:
     """Get the name/label at the specified address."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     name = ida_name.get_name(ea)
     return name if name else f"No name at 0x{ea:x}"
 

@@ -6,7 +6,7 @@ from typing import List, Optional
 
 from .qt_compat import (
     QFrame, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QWidget, QSizePolicy, Signal, Qt,
+    QWidget, QSizePolicy, Qt,
 )
 
 
@@ -57,15 +57,18 @@ class PlanStepWidget(QFrame):
 
 
 class PlanView(QFrame):
-    """Plan mode view with approve/reject controls."""
+    """Plan mode view with approve/reject controls.
 
-    approved = Signal()
-    rejected = Signal()
+    Uses plain Python callbacks instead of Signal() to avoid corrupting
+    Shiboken's global signal registry on Python 3.14.
+    """
 
     def __init__(self, parent: QWidget = None):
         super().__init__(parent)
         self.setObjectName("plan_view")
         self._steps: List[PlanStepWidget] = []
+        self._on_approved = None
+        self._on_rejected = None
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
@@ -89,7 +92,7 @@ class PlanView(QFrame):
             "border-radius: 6px; padding: 6px 16px; font-weight: bold; }"
             "QPushButton:hover { background: #3fb950; }"
         )
-        self._approve_btn.clicked.connect(self.approved.emit)
+        self._approve_btn.clicked.connect(self._fire_approved)
         btn_layout.addWidget(self._approve_btn)
 
         self._reject_btn = QPushButton("Reject")
@@ -98,7 +101,7 @@ class PlanView(QFrame):
             "border-radius: 6px; padding: 6px 16px; font-weight: bold; }"
             "QPushButton:hover { background: #d73a49; }"
         )
-        self._reject_btn.clicked.connect(self.rejected.emit)
+        self._reject_btn.clicked.connect(self._fire_rejected)
         btn_layout.addWidget(self._reject_btn)
 
         btn_layout.addStretch()
@@ -120,6 +123,20 @@ class PlanView(QFrame):
     def set_buttons_visible(self, visible: bool) -> None:
         self._approve_btn.setVisible(visible)
         self._reject_btn.setVisible(visible)
+
+    def set_approved_callback(self, callback) -> None:
+        self._on_approved = callback
+
+    def set_rejected_callback(self, callback) -> None:
+        self._on_rejected = callback
+
+    def _fire_approved(self) -> None:
+        if self._on_approved is not None:
+            self._on_approved()
+
+    def _fire_rejected(self) -> None:
+        if self._on_rejected is not None:
+            self._on_rejected()
 
     def clear(self) -> None:
         for step in self._steps:

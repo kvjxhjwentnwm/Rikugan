@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 from typing import Annotated, Optional
 
-from .base import tool
+from .base import parse_addr, tool
 
 
 try:
@@ -24,7 +24,7 @@ def read_disassembly(
 ) -> str:
     """Read disassembly listing starting at the given address."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     lines = []
     for _ in range(count):
         mnem = idc.print_insn_mnem(ea)
@@ -59,7 +59,7 @@ def read_function_disassembly(
 ) -> str:
     """Read the full disassembly of a function."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     func = ida_funcs.get_func(ea)
     if func is None:
         return f"No function at 0x{ea:x}"
@@ -88,7 +88,7 @@ def read_function_disassembly(
 def get_instruction_info(address: Annotated[str, "Instruction address (hex string)"]) -> str:
     """Get detailed info about a single instruction."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     mnem = idc.print_insn_mnem(ea)
     if not mnem:
         return f"No instruction at 0x{ea:x}"

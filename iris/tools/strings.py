@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 from typing import Annotated
 
-from .base import tool
+from .base import parse_addr, tool
 
 
 try:
@@ -58,7 +58,7 @@ def search_strings(
 def get_string_at(address: Annotated[str, "Address (hex string)"]) -> str:
     """Read the string at a specific address."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     s = idc.get_strlit_contents(ea)
     if s is None:
         return f"No string at 0x{ea:x}"

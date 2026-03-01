@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 from typing import Annotated
 
-from .base import tool
+from .base import parse_addr, tool
 
 
 try:
@@ -25,7 +25,7 @@ def xrefs_to(
 ) -> str:
     """Get all cross-references to the given address."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     target_name = ida_name.get_name(ea)
     lines = [f"Cross-references to 0x{ea:x}" + (f" ({target_name})" if target_name else "") + ":"]
 
@@ -53,7 +53,7 @@ def xrefs_from(
 ) -> str:
     """Get all cross-references from the given address."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     lines = [f"Cross-references from 0x{ea:x}:"]
 
     count = 0
@@ -77,7 +77,7 @@ def function_xrefs(
 ) -> str:
     """Get cross-references to and from a function (callers + callees)."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     func = ida_funcs.get_func(ea)
     if func is None:
         return f"No function at 0x{ea:x}"

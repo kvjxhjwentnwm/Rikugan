@@ -6,7 +6,7 @@ import importlib
 from typing import Annotated, Optional
 
 from ..core.logging import log_debug
-from .base import tool
+from .base import parse_addr, tool
 
 try:
     ida_funcs = importlib.import_module("ida_funcs")
@@ -40,7 +40,7 @@ def list_functions(
 def get_function_info(address: Annotated[str, "Function address (hex string)"]) -> str:
     """Get detailed information about a specific function."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     func = ida_funcs.get_func(ea)
     if func is None:
         return f"No function at 0x{ea:x}"

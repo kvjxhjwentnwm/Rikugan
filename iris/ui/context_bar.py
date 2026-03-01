@@ -40,6 +40,8 @@ class ContextBar(QFrame):
 
         layout.addStretch()
 
+        self._stopped = False
+
         # Auto-update cursor position
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._update_cursor)
@@ -54,9 +56,11 @@ class ContextBar(QFrame):
 
     def stop(self) -> None:
         """Stop the auto-update timer. Call before destruction."""
+        self._stopped = True
         try:
             self._timer.stop()
-        except RuntimeError:
+            self._timer.timeout.disconnect(self._update_cursor)
+        except (RuntimeError, TypeError):
             pass  # timer already destroyed during Qt cleanup
 
     def set_address(self, addr: str) -> None:
@@ -75,6 +79,8 @@ class ContextBar(QFrame):
             self._tokens_label[1].setText(str(count))
 
     def _update_cursor(self) -> None:
+        if self._stopped:
+            return
         try:
             ea = idc.get_screen_ea()
             self.set_address(f"0x{ea:x}")

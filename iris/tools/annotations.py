@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 from typing import Annotated, Optional
 
-from .base import tool
+from .base import parse_addr, tool
 
 _HAS_HEXRAYS = False
 try:
@@ -25,7 +25,7 @@ def rename_function(
 ) -> str:
     """Rename a function."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     func = ida_funcs.get_func(ea)
     if func is None:
         return f"No function at 0x{ea:x}"
@@ -47,7 +47,7 @@ def rename_variable(
     if not _HAS_HEXRAYS:
         return "Hex-Rays decompiler not available"
 
-    ea = int(func_address, 0)
+    ea = parse_addr(func_address)
     try:
         cfunc = ida_hexrays.decompile(ea)
     except Exception as e:
@@ -75,7 +75,7 @@ def set_comment(
 ) -> str:
     """Set a comment at the given address."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     ok = idc.set_cmt(ea, comment, repeatable)
     if ok:
         kind = "repeatable " if repeatable else ""
@@ -91,7 +91,7 @@ def set_function_comment(
 ) -> str:
     """Set a function-level comment."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     func = ida_funcs.get_func(ea)
     if func is None:
         return f"No function at 0x{ea:x}"
@@ -109,7 +109,7 @@ def rename_address(
 ) -> str:
     """Set or change the name/label at an address."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     old = ida_name.get_name(ea)
     ok = ida_name.set_name(ea, new_name, ida_name.SN_NOWARN | ida_name.SN_NOCHECK)
     if ok:
@@ -124,7 +124,7 @@ def set_type(
 ) -> str:
     """Set the type of a function or data item."""
 
-    ea = int(address, 0)
+    ea = parse_addr(address)
     ok = idc.SetType(ea, type_string)
     if ok:
         return f"Set type at 0x{ea:x}: {type_string}"

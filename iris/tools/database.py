@@ -5,7 +5,7 @@ from __future__ import annotations
 import importlib
 from typing import Annotated
 
-from .base import tool
+from .base import parse_addr, tool
 
 
 try:
@@ -130,7 +130,8 @@ def read_bytes(
     """Read raw bytes at an address and return as hex dump."""
 
     _MAX_READ_BYTES = 1024
-    ea = int(address, 0)
+    ea = parse_addr(address)
+    size = int(size)
     if size > _MAX_READ_BYTES:
         size = _MAX_READ_BYTES
 

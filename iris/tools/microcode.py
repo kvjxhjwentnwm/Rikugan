@@ -18,7 +18,7 @@ from typing import Annotated
 
 from ..core.errors import ToolError
 from ..core.logging import log_debug
-from .base import tool
+from .base import parse_addr, tool
 from .microcode_format import (
     require_hexrays, parse_maturity, maturity_label,
     insn_text, format_mba, format_block, operand_detail,
@@ -139,7 +139,7 @@ def get_microcode(
     decompiler output.
     """
     require_hexrays()
-    ea = int(address, 0)
+    ea = parse_addr(address)
     mat = parse_maturity(maturity)
     pfn = _get_func_or_raise(ea)
 
@@ -169,7 +169,7 @@ def get_microcode_block(
     individual blocks with this tool for detailed operand information.
     """
     require_hexrays()
-    ea = int(address, 0)
+    ea = parse_addr(address)
     mat = parse_maturity(maturity)
     pfn = _get_func_or_raise(ea)
 
@@ -245,7 +245,7 @@ def nop_microcode(
     Use remove_microcode_optimizer() to undo.
     """
     require_hexrays()
-    func_ea = int(func_address, 0)
+    func_ea = parse_addr(func_address)
     pfn = _get_func_or_raise(func_ea)
 
     # Parse target addresses
@@ -255,7 +255,7 @@ def nop_microcode(
 
     target_eas = set()
     for a in raw_addrs:
-        target_eas.add(int(a, 0))
+        target_eas.add(parse_addr(a))
 
     # Name the optimizer
     name = optimizer_name or f"nop_{pfn.start_ea:#x}_{len(installed_optimizers)}"
@@ -427,7 +427,7 @@ def redecompile_function(
     the effect on the decompiler output.
     """
     require_hexrays()
-    ea = int(address, 0)
+    ea = parse_addr(address)
     pfn = _get_func_or_raise(ea)
 
     # Clear cached decompilation to force re-analysis

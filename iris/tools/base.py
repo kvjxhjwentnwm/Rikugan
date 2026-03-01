@@ -10,6 +10,14 @@ from typing import Any, Callable, Dict, List, Optional, get_type_hints
 
 from ..core.errors import ToolError, ToolValidationError
 
+
+def parse_addr(value: Any) -> int:
+    """Parse an address that may arrive as hex string or int from the LLM."""
+    if isinstance(value, int):
+        return value
+    return int(value, 0)
+
+
 # Python type -> JSON Schema type
 _TYPE_MAP = {
     str: "string",
