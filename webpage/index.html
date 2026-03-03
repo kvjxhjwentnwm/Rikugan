@@ -95,6 +95,12 @@ img{max-width:100%;display:block}
   margin-bottom:.15em;line-height:1;
   animation:fadeUp .7s ease-out .05s both;
 }
+.hero-romaji{
+  font-size:.65em;font-weight:700;letter-spacing:.08em;
+  vertical-align:baseline;
+  background:linear-gradient(135deg,var(--accent),var(--pink));
+  -webkit-background-clip:text;
+}
 .hero h1{
   font-size:1.5rem;font-weight:400;color:var(--text-dim);
   max-width:620px;margin:0 auto .6em;line-height:1.6;
@@ -362,8 +368,7 @@ img{max-width:100%;display:block}
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
   <div class="hero-glow2"></div>
-  <img src="assets/rikugan_icon.png" alt="" class="hero-icon">
-  <div class="hero-jp">六眼</div>
+  <div class="hero-jp"><span class="hero-romaji">Rikugan</span> 六眼</div>
   <h1>A reverse-engineering <strong>AI agent</strong> for <strong>IDA Pro</strong> and <strong>Binary Ninja</strong> that lives inside your disassembler.</h1>
   <div class="hero-badges">
     <span class="badge"><span class="dot" style="background:var(--accent)"></span>Generator-based Loop</span>
