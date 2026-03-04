@@ -104,17 +104,19 @@ class SessionHistory:
                     "messages": len(data.get("messages", [])),
                     "description": data.get("description", ""),
                 }
-                # Strict filter: only return sessions matching the exact idb_path
-                if normalized_target:
+                # When db_instance_id is provided, use it as the primary key
+                # (UUIDs are globally unique, so path matching is redundant).
+                # This handles BN where the path may change between raw binary
+                # and .bndb across sessions.
+                if db_instance_id:
+                    if entry["db_instance_id"] != db_instance_id:
+                        continue
+                elif normalized_target:
                     if entry["idb_path"] != normalized_target:
                         continue
                 else:
-                    # No idb_path given — only return sessions with no idb_path
+                    # No idb_path or instance_id — only return sessions with no idb_path
                     if entry["idb_path"]:
-                        continue
-                # Filter by db_instance_id when provided
-                if db_instance_id:
-                    if entry["db_instance_id"] != db_instance_id:
                         continue
                 sessions.append(entry)
             except (json.JSONDecodeError, OSError) as exc:

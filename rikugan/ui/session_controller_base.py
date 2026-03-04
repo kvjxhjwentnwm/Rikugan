@@ -273,6 +273,11 @@ class SessionControllerBase:
         # model switch).  The user can re-send if still relevant.
         self._pending_messages.clear()
 
+        # Re-persist the instance ID in the database.  For BN the BNDB may
+        # not have existed at init time; writing again ensures the ID is
+        # present when the BNDB is eventually saved.
+        set_database_instance_id(self._db_instance_id)
+
         session = self._sessions.get(self._active_tab_id)
         if session and self.config.checkpoint_auto_save and session.messages:
             try:
@@ -384,6 +389,8 @@ class SessionControllerBase:
         if self._runner:
             self._runner.cancel()
             self._runner = None
+        # Final attempt to persist instance ID before the host saves the DB.
+        set_database_instance_id(self._db_instance_id)
         for tab_id, session in self._sessions.items():
             if self.config.checkpoint_auto_save and session.messages:
                 try:

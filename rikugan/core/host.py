@@ -248,8 +248,12 @@ def get_database_instance_id() -> str:
             return ""
         try:
             val = bv.query_metadata("rikugan_db_id")
-            return str(val) if val else ""
-        except Exception:
+            if val is None:
+                return ""
+            # query_metadata may return a Metadata wrapper; unwrap if needed.
+            raw = getattr(val, "value", val)
+            return str(raw) if raw else ""
+        except (KeyError, Exception):
             return ""
 
     return ""
@@ -268,7 +272,8 @@ def set_database_instance_id(instance_id: str) -> bool:
             node = idaapi.netnode("$ rikugan", 0, True)
             node.supset(0, instance_id)
             return True
-        except Exception:
+        except Exception as e:
+            sys.stderr.write(f"[Rikugan] set_database_instance_id IDA failed: {e}\n")
             return False
 
     if is_binary_ninja():
@@ -278,7 +283,8 @@ def set_database_instance_id(instance_id: str) -> bool:
         try:
             bv.store_metadata("rikugan_db_id", instance_id)
             return True
-        except Exception:
+        except Exception as e:
+            sys.stderr.write(f"[Rikugan] set_database_instance_id BN failed: {e}\n")
             return False
 
     return False
