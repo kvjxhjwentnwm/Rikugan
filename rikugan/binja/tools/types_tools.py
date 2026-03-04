@@ -172,9 +172,13 @@ def _parse_types_from_source(bv: Any, source: str) -> Dict[str, Any]:
 
 def _define_types_from_source(bv: Any, source: str) -> Dict[str, Any]:
     parsed = _parse_types_from_source(bv, source)
+    defined: Dict[str, Any] = {}
     for name, t in parsed.items():
-        define_user_type(bv, name, t)
-    return parsed
+        if define_user_type(bv, name, t):
+            defined[name] = t
+    if defined:
+        update_analysis_and_wait(bv)
+    return defined
 
 
 def _extract_struct_members(t: Any) -> List[Dict[str, Any]]:
@@ -233,6 +237,22 @@ def _build_struct_decl(name: str, fields: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+def _parse_field_type(bv: Any, ftype_str: str) -> Any:
+    """Parse a field type string, trying with a dummy variable name if needed."""
+    # Try with a dummy variable name first (BN often requires a declaration)
+    last_err: Exception | None = None
+    for src in (f"{ftype_str} __rikugan_tmp", ftype_str):
+        try:
+            t, _ = parse_type_string(bv, src)
+            return t
+        except Exception as exc:
+            last_err = exc
+            continue
+    if last_err is not None:
+        log_debug(f"_parse_field_type: could not parse {ftype_str!r}: {last_err}")
+    return None
+
+
 def _redefine_struct_with_builder(bv: Any, name: str, fields: List[Dict[str, Any]]) -> bool:
     """Build a struct using BN's StructureBuilder API (reliable, version-agnostic)."""
     bn = get_bn_module()
@@ -243,22 +263,29 @@ def _redefine_struct_with_builder(bv: Any, name: str, fields: List[Dict[str, Any
         if sb_cls is None:
             return False
         sb = sb_cls.create()
+        added = 0
         for f in fields:
             fname = f["name"]
             ftype_str = f.get("type", "int")
             off = f.get("offset")
-            try:
-                ftype, _ = parse_type_string(bv, ftype_str)
-            except Exception:
+            ftype = _parse_field_type(bv, ftype_str)
+            if ftype is None:
+                log_debug(f"_redefine_struct_with_builder: skipping field {fname!r}, "
+                          f"could not parse type {ftype_str!r}")
                 continue
             if isinstance(off, int) and off >= 0:
                 insert = getattr(sb, "insert", None)
                 if callable(insert):
                     insert(off, ftype, fname)
+                    added += 1
                     continue
             append = getattr(sb, "append", None)
             if callable(append):
                 append(ftype, fname)
+                added += 1
+        if added == 0:
+            log_debug("_redefine_struct_with_builder: no fields added, skipping define")
+            return False
         struct_type_fn = getattr(bn, "Type", None)
         if struct_type_fn is not None:
             struct_type_fn = getattr(struct_type_fn, "structure_type", None)
@@ -266,7 +293,10 @@ def _redefine_struct_with_builder(bv: Any, name: str, fields: List[Dict[str, Any
             struct_type = struct_type_fn(sb)
         else:
             struct_type = sb.immutable_copy() if hasattr(sb, "immutable_copy") else sb
-        return define_user_type(bv, name, struct_type)
+        ok = define_user_type(bv, name, struct_type)
+        if ok:
+            update_analysis_and_wait(bv)
+        return ok
     except Exception as e:
         log_debug(f"_redefine_struct_with_builder failed: {e}")
         return False

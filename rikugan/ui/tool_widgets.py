@@ -311,9 +311,11 @@ class _SharedSpinnerTimer:
 
     def register(self, widget: "ToolCallWidget") -> None:
         self._widgets.add(widget)
-        # Auto-unregister if Qt deletes the widget before _stop_spinner() is called.
-        # The default-arg capture (w=widget) avoids a closure over a loop variable.
-        widget.destroyed.connect(lambda _=None, w=widget: self._widgets.discard(w))
+        # NOTE: Do NOT connect to widget.destroyed here.  PySide6/Shiboken
+        # under IDA may GC the lambda slot, leaving a dangling C++ pointer
+        # in Qt's connection list.  When *any* QWidget is later destroyed,
+        # the stale slot pointer causes a SIGBUS (0xaaaa freed-memory read).
+        # Stale widgets are already handled safely in _tick() via RuntimeError.
         if not self._timer.isActive():
             self._timer.start()
 
