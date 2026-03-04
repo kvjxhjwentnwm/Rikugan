@@ -3,9 +3,23 @@
 from __future__ import annotations
 
 import importlib
-from typing import Annotated
+from typing import Annotated, Iterable
 
 from .base import parse_addr, tool
+
+
+def format_callers_callees(fname: str, start: int, callers: Iterable[str], callees: Iterable[str]) -> str:
+    """Format a function callers/callees summary (shared between IDA and BN xref tools)."""
+    callers = sorted(callers)
+    callees = sorted(callees)
+    parts = [f"Function: {fname} (0x{start:x})"]
+    parts.append(f"\nCallers ({len(callers)}):")
+    for c in callers:
+        parts.append(f"  {c}")
+    parts.append(f"\nCallees ({len(callees)}):")
+    for c in callees:
+        parts.append(f"  {c}")
+    return "\n".join(parts)
 
 
 try:
@@ -120,11 +134,4 @@ def function_xrefs(
             if cf and cf.start_ea != func.start_ea:
                 callees.add(ida_name.get_name(cf.start_ea))
 
-    parts = [f"Function: {fname} (0x{func.start_ea:x})"]
-    parts.append(f"\nCallers ({len(callers)}):")
-    for c in sorted(callers):
-        parts.append(f"  {c}")
-    parts.append(f"\nCallees ({len(callees)}):")
-    for c in sorted(callees):
-        parts.append(f"  {c}")
-    return "\n".join(parts)
+    return format_callers_callees(fname, func.start_ea, callers, callees)

@@ -12,6 +12,7 @@ from .base import (
     PERSISTENT_MEMORY_SECTION,
     RENAMING_SECTION,
     SAFETY_SECTION,
+    SHARED_CAPABILITIES_BULLETS,
     TOKEN_EFFICIENCY_SECTION,
 )
 
@@ -49,23 +50,16 @@ built-in tools over execute_python (Binary Ninja Python scripting).
 - IL operations (use get_il, nop_instructions, install_il_optimizer)
 """
 
-_BINJA_CAPABILITIES = """\
-## Capabilities
-You have direct access to the Binary Ninja database through purpose-built tools:
-- Read disassembly and decompiled pseudocode
-- Navigate to addresses and functions
-- Search for functions, strings, and cross-references
-- Rename functions, variables, and addresses
-- Set comments and types
-- Create and modify structs, enums, and typedefs
-- Suggest struct layouts from pointer access patterns
-- Apply type information and propagate changes
-- Read IL at any level (LLIL, MLIL, HLIL)
-- NOP junk instructions to clean decompiler output
-- Install custom Python IL optimizers (instruction-level or block-level)
-- Manage optimizer lifecycle (install, list, remove, redecompile)
-- Execute Python scripts as a last resort when no built-in tool fits
-"""
+_BINJA_CAPABILITIES = (
+    "## Capabilities\n"
+    "You have direct access to the Binary Ninja database through purpose-built tools:\n"
+    + SHARED_CAPABILITIES_BULLETS + "\n"
+    "- Read IL at any level (LLIL, MLIL, HLIL)\n"
+    "- NOP junk instructions to clean decompiler output\n"
+    "- Install custom Python IL optimizers (instruction-level or block-level)\n"
+    "- Manage optimizer lifecycle (install, list, remove, redecompile)\n"
+    "- Execute Python scripts as a last resort when no built-in tool fits\n"
+)
 
 BINJA_BASE_PROMPT = (
     _BINJA_INTRO

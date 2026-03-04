@@ -149,3 +149,14 @@ CLOSING_SECTION = """\
 You do what was asked, you do it well, and you don't keep going when
 nobody asked you to.
 """
+
+# Capability bullet lines shared by both IDA and Binary Ninja prompts.
+SHARED_CAPABILITIES_BULLETS = """\
+- Read disassembly and decompiled pseudocode
+- Navigate to addresses and functions
+- Search for functions, strings, and cross-references
+- Rename functions, variables, and addresses
+- Set comments and types
+- Create and modify structs, enums, and typedefs
+- Suggest struct layouts from pointer access patterns
+- Apply type information and propagate changes"""

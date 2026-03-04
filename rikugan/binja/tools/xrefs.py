@@ -6,6 +6,7 @@ from typing import Annotated, Iterable, List, Tuple
 
 from ...core.logging import log_debug
 from ...tools.base import tool
+from ...tools.xrefs import format_callers_callees
 from .common import (
     get_function_at,
     get_function_name,
@@ -157,11 +158,4 @@ def function_xrefs(
     for c in list(getattr(func, "callees", []) or []):
         callees.add(get_function_name(c))
 
-    parts = [f"Function: {fname} (0x{start:x})"]
-    parts.append(f"\nCallers ({len(callers)}):")
-    for c in sorted(callers):
-        parts.append(f"  {c}")
-    parts.append(f"\nCallees ({len(callees)}):")
-    for c in sorted(callees):
-        parts.append(f"  {c}")
-    return "\n".join(parts)
+    return format_callers_callees(fname, start, callers, callees)
