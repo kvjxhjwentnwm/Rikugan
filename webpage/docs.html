@@ -360,9 +360,12 @@ cd rikugan</code></pre>
 <p>Rikugan stores its configuration per host:</p>
 <div class="table-wrap">
   <table>
-    <tr><th>Host</th><th>Config Path</th></tr>
-    <tr><td>IDA Pro</td><td><code>~/.idapro/rikugan/config.json</code></td></tr>
-    <tr><td>Binary Ninja</td><td><code>~/.binaryninja/rikugan/config.json</code></td></tr>
+    <tr><th>Host</th><th>Platform</th><th>Config Path</th></tr>
+    <tr><td>IDA Pro</td><td>Linux / macOS</td><td><code>~/.idapro/rikugan/config.json</code></td></tr>
+    <tr><td>IDA Pro</td><td>Windows</td><td><code>%APPDATA%\Hex-Rays\IDA Pro\rikugan\config.json</code></td></tr>
+    <tr><td>Binary Ninja</td><td>Linux</td><td><code>~/.binaryninja/rikugan/config.json</code></td></tr>
+    <tr><td>Binary Ninja</td><td>macOS</td><td><code>~/Library/Application Support/Binary Ninja/rikugan/config.json</code></td></tr>
+    <tr><td>Binary Ninja</td><td>Windows</td><td><code>%APPDATA%\Binary Ninja\rikugan\config.json</code></td></tr>
   </table>
 </div>
 <p>You can edit this JSON file directly, or use the Settings dialog in the UI.</p>
@@ -522,9 +525,12 @@ cd rikugan</code></pre>
 <p>Connect external MCP servers to extend Rikugan with additional tools. Create the config file:</p>
 <div class="table-wrap">
   <table>
-    <tr><th>Host</th><th>MCP Config Path</th></tr>
-    <tr><td>IDA Pro</td><td><code>~/.idapro/rikugan/mcp.json</code></td></tr>
-    <tr><td>Binary Ninja</td><td><code>~/.binaryninja/rikugan/mcp.json</code></td></tr>
+    <tr><th>Host</th><th>Platform</th><th>MCP Config Path</th></tr>
+    <tr><td>IDA Pro</td><td>Linux / macOS</td><td><code>~/.idapro/rikugan/mcp.json</code></td></tr>
+    <tr><td>IDA Pro</td><td>Windows</td><td><code>%APPDATA%\Hex-Rays\IDA Pro\rikugan\mcp.json</code></td></tr>
+    <tr><td>Binary Ninja</td><td>Linux</td><td><code>~/.binaryninja/rikugan/mcp.json</code></td></tr>
+    <tr><td>Binary Ninja</td><td>macOS</td><td><code>~/Library/Application Support/Binary Ninja/rikugan/mcp.json</code></td></tr>
+    <tr><td>Binary Ninja</td><td>Windows</td><td><code>%APPDATA%\Binary Ninja\rikugan\mcp.json</code></td></tr>
   </table>
 </div>
 <pre><code class="language-json">{
@@ -542,8 +548,14 @@ cd rikugan</code></pre>
 
 <h2 id="custom-skills">Custom Skills</h2>
 <p>Create custom skills in your user directory:</p>
-<pre><code class="language-text">~/.idapro/rikugan/skills/       # IDA Pro
-~/.binaryninja/rikugan/skills/  # Binary Ninja
+<pre><code class="language-text"># IDA Pro
+~/.idapro/rikugan/skills/                                        # Linux / macOS
+%APPDATA%\Hex-Rays\IDA Pro\rikugan\skills\                       # Windows
+
+# Binary Ninja
+~/.binaryninja/rikugan/skills/                                   # Linux
+~/Library/Application Support/Binary Ninja/rikugan/skills/       # macOS
+%APPDATA%\Binary Ninja\rikugan\skills\                           # Windows
 
 my-skill/
   SKILL.md             # required: frontmatter + prompt body
@@ -641,16 +653,29 @@ Task: &lt;instruction for the agent&gt;
 
 <h2 id="config-reference">Config Reference</h2>
 <h3>Config Paths</h3>
+<p>All paths below are under each host's user directory. IDA Pro shares the same user directory on Linux and macOS (<code>~/.idapro/</code>); Binary Ninja uses a platform-specific location.</p>
 <div class="table-wrap">
   <table>
-    <tr><th>File</th><th>IDA Pro</th><th>Binary Ninja</th></tr>
-    <tr><td>Main config</td><td><code>~/.idapro/rikugan/config.json</code></td><td><code>~/.binaryninja/rikugan/config.json</code></td></tr>
-    <tr><td>MCP config</td><td><code>~/.idapro/rikugan/mcp.json</code></td><td><code>~/.binaryninja/rikugan/mcp.json</code></td></tr>
-    <tr><td>Custom skills</td><td><code>~/.idapro/rikugan/skills/</code></td><td><code>~/.binaryninja/rikugan/skills/</code></td></tr>
-    <tr><td>Sessions</td><td><code>~/.idapro/rikugan/sessions/</code></td><td><code>~/.binaryninja/rikugan/sessions/</code></td></tr>
-    <tr><td>Debug log</td><td><code>~/.idapro/rikugan/rikugan_debug.log</code></td><td><code>~/.binaryninja/rikugan/rikugan_debug.log</code></td></tr>
-    <tr><td>Structured log</td><td><code>~/.idapro/rikugan/rikugan_structured.jsonl</code></td><td><code>~/.binaryninja/rikugan/rikugan_structured.jsonl</code></td></tr>
+    <tr><th>File</th><th>IDA Pro — Linux / macOS</th><th>IDA Pro — Windows</th></tr>
+    <tr><td>Main config</td><td><code>~/.idapro/rikugan/config.json</code></td><td><code>%APPDATA%\Hex-Rays\IDA Pro\rikugan\config.json</code></td></tr>
+    <tr><td>MCP config</td><td><code>~/.idapro/rikugan/mcp.json</code></td><td><code>%APPDATA%\Hex-Rays\IDA Pro\rikugan\mcp.json</code></td></tr>
+    <tr><td>Custom skills</td><td><code>~/.idapro/rikugan/skills/</code></td><td><code>%APPDATA%\Hex-Rays\IDA Pro\rikugan\skills\</code></td></tr>
+    <tr><td>Sessions</td><td><code>~/.idapro/rikugan/sessions/</code></td><td><code>%APPDATA%\Hex-Rays\IDA Pro\rikugan\sessions\</code></td></tr>
+    <tr><td>Debug log</td><td><code>~/.idapro/rikugan/rikugan_debug.log</code></td><td><code>%APPDATA%\Hex-Rays\IDA Pro\rikugan\rikugan_debug.log</code></td></tr>
+    <tr><td>Structured log</td><td><code>~/.idapro/rikugan/rikugan_structured.jsonl</code></td><td><code>%APPDATA%\Hex-Rays\IDA Pro\rikugan\rikugan_structured.jsonl</code></td></tr>
     <tr><td>Persistent memory</td><td colspan="2"><code>&lt;idb_directory&gt;/RIKUGAN.md</code></td></tr>
+  </table>
+</div>
+<div class="table-wrap">
+  <table>
+    <tr><th>File</th><th>Binary Ninja — Linux</th><th>Binary Ninja — macOS</th><th>Binary Ninja — Windows</th></tr>
+    <tr><td>Main config</td><td><code>~/.binaryninja/rikugan/config.json</code></td><td><code>~/Library/Application Support/Binary Ninja/rikugan/config.json</code></td><td><code>%APPDATA%\Binary Ninja\rikugan\config.json</code></td></tr>
+    <tr><td>MCP config</td><td><code>~/.binaryninja/rikugan/mcp.json</code></td><td><code>~/Library/Application Support/Binary Ninja/rikugan/mcp.json</code></td><td><code>%APPDATA%\Binary Ninja\rikugan\mcp.json</code></td></tr>
+    <tr><td>Custom skills</td><td><code>~/.binaryninja/rikugan/skills/</code></td><td><code>~/Library/Application Support/Binary Ninja/rikugan/skills/</code></td><td><code>%APPDATA%\Binary Ninja\rikugan\skills\</code></td></tr>
+    <tr><td>Sessions</td><td><code>~/.binaryninja/rikugan/sessions/</code></td><td><code>~/Library/Application Support/Binary Ninja/rikugan/sessions/</code></td><td><code>%APPDATA%\Binary Ninja\rikugan\sessions\</code></td></tr>
+    <tr><td>Debug log</td><td><code>~/.binaryninja/rikugan/rikugan_debug.log</code></td><td><code>~/Library/Application Support/Binary Ninja/rikugan/rikugan_debug.log</code></td><td><code>%APPDATA%\Binary Ninja\rikugan\rikugan_debug.log</code></td></tr>
+    <tr><td>Structured log</td><td><code>~/.binaryninja/rikugan/rikugan_structured.jsonl</code></td><td><code>~/Library/Application Support/Binary Ninja/rikugan/rikugan_structured.jsonl</code></td><td><code>%APPDATA%\Binary Ninja\rikugan\rikugan_structured.jsonl</code></td></tr>
+    <tr><td>Persistent memory</td><td colspan="3"><code>&lt;bndb_directory&gt;/RIKUGAN.md</code></td></tr>
   </table>
 </div>
 

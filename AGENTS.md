@@ -76,7 +76,6 @@ rikugan/
 │   ├── microcode_optim.py    # Microcode optimizer framework
 │   └── scripting.py          # IDA execute_python tool
 │
-├── tools_bn/                 # Backward-compat shims → rikugan.binja.tools.*
 ├── hosts/                    # Backward-compat shims → rikugan.ida.ui.* / rikugan.binja.ui.*
 │
 ├── providers/                # LLM provider integrations (host-agnostic)

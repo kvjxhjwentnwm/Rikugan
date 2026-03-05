@@ -167,8 +167,8 @@ Installers create plugin, install dependencies, and initialize host-specific Rik
 
 Rikugan has a settings dialog to configure your model of choice. Open Rikugan → click Settings → paste your key.
 
-- IDA config: `~/.idapro/rikugan/config.json`
-- Binary Ninja config: `~/.binaryninja/rikugan/config.json` (or platform-equivalent user dir)
+- IDA config: `~/.idapro/rikugan/config.json` (Linux / macOS) · `%APPDATA%\Hex-Rays\IDA Pro\rikugan\config.json` (Windows)
+- Binary Ninja config: `~/.binaryninja/rikugan/config.json` (Linux) · `~/Library/Application Support/Binary Ninja/rikugan/config.json` (macOS) · `%APPDATA%\Binary Ninja\rikugan\config.json` (Windows)
 
 ![alt text](assets/rikugan_settings.png)
 
@@ -237,13 +237,23 @@ Skills are reusable analysis workflows. Type `/` in the input area to see availa
 
 Create custom skills in:
 
-- IDA: `~/.idapro/rikugan/skills/<slug>/SKILL.md`
-- Binary Ninja: `~/.binaryninja/rikugan/skills/<slug>/SKILL.md`
+- IDA (Linux / macOS): `~/.idapro/rikugan/skills/<slug>/SKILL.md`
+- IDA (Windows): `%APPDATA%\Hex-Rays\IDA Pro\rikugan\skills\<slug>\SKILL.md`
+- Binary Ninja (Linux): `~/.binaryninja/rikugan/skills/<slug>/SKILL.md`
+- Binary Ninja (macOS): `~/Library/Application Support/Binary Ninja/rikugan/skills/<slug>/SKILL.md`
+- Binary Ninja (Windows): `%APPDATA%\Binary Ninja\rikugan\skills\<slug>\SKILL.md`
 
 Each skill lives in its own subdirectory.
 
 ```
-~/.idapro/rikugan/skills/      # or ~/.binaryninja/rikugan/skills/
+# IDA Pro
+~/.idapro/rikugan/skills/                                        # Linux / macOS
+%APPDATA%\Hex-Rays\IDA Pro\rikugan\skills\                       # Windows
+
+# Binary Ninja
+~/.binaryninja/rikugan/skills/                                   # Linux
+~/Library/Application Support/Binary Ninja/rikugan/skills/       # macOS
+%APPDATA%\Binary Ninja\rikugan\skills\                           # Windows
   my-skill/
     SKILL.md            # required — frontmatter + prompt body
     references/         # optional — .md files appended to the prompt
@@ -270,8 +280,11 @@ The `allowed_tools` field is optional — when set, the agent can only use those
 
 Connect external MCP servers to extend Rikugan with additional tools. Create the config file at:
 
-- IDA: `~/.idapro/rikugan/mcp.json`
-- Binary Ninja: `~/.binaryninja/rikugan/mcp.json`
+- IDA (Linux / macOS): `~/.idapro/rikugan/mcp.json`
+- IDA (Windows): `%APPDATA%\Hex-Rays\IDA Pro\rikugan\mcp.json`
+- Binary Ninja (Linux): `~/.binaryninja/rikugan/mcp.json`
+- Binary Ninja (macOS): `~/Library/Application Support/Binary Ninja/rikugan/mcp.json`
+- Binary Ninja (Windows): `%APPDATA%\Binary Ninja\rikugan\mcp.json`
 
 ```json
 {

@@ -458,7 +458,7 @@ td code{font-size:.82rem}
   <div class="hero-grid"></div>
   <div class="hero-jp">六眼</div>
   <h1>Rikugan Architecture</h1>
-  <p class="hero-sub">Complete technical reference for the agent internals, tooling framework, exploration mode, and everything under the hood.</p>
+  <p class="hero-sub">Complete technical reference for the agent internals, tooling framework, exploration mode, and everything under the hood — for developers and agents.</p>
   <div class="hero-badges">
     <span class="badge"><span class="dot purple"></span>Generator-based Loop</span>
     <span class="badge"><span class="dot pink"></span>4-Phase Exploration</span>
@@ -806,7 +806,8 @@ Task: Analyze this binary as potential malware.
   <p><code>SkillRegistry.discover()</code> scans:</p>
   <ol>
     <li><strong>Built-in skills:</strong> <code>rikugan/skills/builtins/*/SKILL.md</code></li>
-    <li><strong>User skills:</strong> <code>~/.idapro/rikugan/skills/*/SKILL.md</code> (IDA) or <code>~/.binaryninja/rikugan/skills/*/SKILL.md</code> (BN)</li>
+    <li><strong>User skills (IDA Pro):</strong> <code>~/.idapro/rikugan/skills/*/SKILL.md</code> (Linux / macOS) · <code>%APPDATA%\Hex-Rays\IDA Pro\rikugan\skills\*\SKILL.md</code> (Windows)</li>
+    <li><strong>User skills (Binary Ninja):</strong> <code>~/.binaryninja/rikugan/skills/*/SKILL.md</code> (Linux) · <code>~/Library/Application Support/Binary Ninja/rikugan/skills/*/SKILL.md</code> (macOS) · <code>%APPDATA%\Binary Ninja\rikugan\skills\*\SKILL.md</code> (Windows)</li>
   </ol>
   <p>Reference files in <code>references/*.md</code> subdirectories are automatically appended to the skill body.</p>
 
