@@ -67,6 +67,7 @@ _WIDGET_NAMES = [
     "QSizePolicy",
     "QSpinBox",
     "QSplitter",
+    "QStackedWidget",
     "QTabBar",
     "QTableWidget",
     "QTableWidgetItem",

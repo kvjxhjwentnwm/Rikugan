@@ -9,6 +9,8 @@ import time
 from collections.abc import Callable
 from typing import Any
 
+from PySide6.QtWidgets import QStackedWidget
+
 from ..agent.mutation import MutationRecord
 from ..agent.turn import TurnEvent, TurnEventType
 from ..core.config import RikuganConfig
@@ -293,6 +295,14 @@ class RikuganPanelCore(QWidget):
             # Runtime init completed but no skills found; stop polling.
             self._stop_skills_refresh_timer()
 
+    _MODE_BAR_STYLE = (
+        "QTabBar { background: #2d2d2d; border: none; border-bottom: 1px solid #3c3c3c; }"
+        "QTabBar::tab { background: #2d2d2d; color: #808080; padding: 4px 16px; "
+        "border: none; border-bottom: 2px solid transparent; font-size: 11px; }"
+        "QTabBar::tab:selected { color: #d4d4d4; border-bottom: 2px solid #4ec9b0; }"
+        "QTabBar::tab:hover:!selected { color: #d4d4d4; }"
+    )
+
     def _build_ui(self) -> None:
         self.setStyleSheet(DARK_THEME)
         self.setObjectName("rikugan_panel")
@@ -301,10 +311,40 @@ class RikuganPanelCore(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
+        # Top-level mode switcher: Chat | Tools (like Binja's Tags | Tag Types)
+        # Hidden for IDA which uses a separate dockable form for tools.
+        self._mode_bar = QTabBar()
+        self._mode_bar.setObjectName("mode_bar")
+        self._mode_bar.setStyleSheet(self._MODE_BAR_STYLE)
+        self._mode_bar.setExpanding(False)
+        self._mode_bar.setDrawBase(False)
+        self._mode_bar.addTab("Chat")
+        self._mode_bar.addTab("Tools")
+        self._mode_bar.currentChanged.connect(self._on_mode_changed)
+        if self._tools_form_factory is not None:
+            self._mode_bar.setVisible(False)
+        layout.addWidget(self._mode_bar)
+
+        # Stacked content: page 0 = chat, page 1 = tools
+        self._mode_stack = QStackedWidget()
+        layout.addWidget(self._mode_stack, 1)
+
+        # --- Page 0: Chat ---
+        chat_page = QWidget()
+        chat_layout = QVBoxLayout(chat_page)
+        chat_layout.setContentsMargins(0, 0, 0, 0)
+        chat_layout.setSpacing(0)
         self._build_tab_widget()
-        self._build_main_splitter(layout)
+        self._build_main_splitter(chat_layout)
         self._create_tab(self._ctrl.active_tab_id, "New Chat")
-        layout.addWidget(self._build_input_section())
+        chat_layout.addWidget(self._build_input_section())
+        self._mode_stack.addWidget(chat_page)
+
+        # --- Page 1: Tools (lazily populated on first switch) ---
+        self._tools_panel = ToolsPanel()
+        self._tools_panel.hide_header()
+        self._mode_stack.addWidget(self._tools_panel)
+        self._tools_tab_index = -1  # kept for IDA compat
 
         self._context_bar = ContextBar()
         self._context_bar.set_model(self._config.provider.model)
@@ -361,10 +401,6 @@ class RikuganPanelCore(QWidget):
 
         self._main_splitter.setStretchFactor(0, 3)
         self._main_splitter.setStretchFactor(1, 1)
-
-        # Tools panel widget (always created; docking is handled by form wrapper)
-        self._tools_panel = ToolsPanel()
-        self._tools_panel.setVisible(False)
 
         layout.addWidget(self._main_splitter, 1)
 
@@ -1011,8 +1047,17 @@ class RikuganPanelCore(QWidget):
         self._mutation_panel.setVisible(visible)
         self._mutations_btn.setChecked(visible)
 
+    def _on_mode_changed(self, index: int) -> None:
+        """Handle the Chat / Tools mode bar switch."""
+        self._mode_stack.setCurrentIndex(index)
+        if index == 1:
+            self._ensure_tools_initialized()
+            self._tools_btn.setChecked(True)
+        else:
+            self._tools_btn.setChecked(False)
+
     def _on_toggle_tools(self) -> None:
-        """Toggle the Tools view (IDA-docked or standalone window)."""
+        """Toggle the Tools view (IDA-docked or embedded mode tab)."""
         if self._tools_panel is None:
             return
         self._ensure_tools_initialized()
@@ -1026,15 +1071,9 @@ class RikuganPanelCore(QWidget):
                 self._tools_form.show()
                 self._tools_btn.setChecked(True)
         else:
-            # Standalone window (Binary Ninja / headless)
-            if self._tools_panel.isVisible():
-                self._tools_panel.hide()
-                self._tools_btn.setChecked(False)
-            else:
-                self._tools_panel.show()
-                self._tools_panel.raise_()
-                self._tools_panel.activateWindow()
-                self._tools_btn.setChecked(True)
+            # Toggle mode bar between Chat (0) and Tools (1)
+            current = self._mode_bar.currentIndex()
+            self._mode_bar.setCurrentIndex(1 if current == 0 else 0)
 
     def show_tools_panel(self, tab_index: int = 0) -> None:
         """Show the tools view and switch to the given tab.
@@ -1049,9 +1088,7 @@ class RikuganPanelCore(QWidget):
             self._tools_form.show()
             self._tools_form.set_tab(tab_index)
         else:
-            self._tools_panel.show()
-            self._tools_panel.raise_()
-            self._tools_panel.activateWindow()
+            self._mode_bar.setCurrentIndex(1)
             if hasattr(self._tools_panel, "_tabs"):
                 self._tools_panel._tabs.setCurrentIndex(tab_index)
         self._tools_btn.setChecked(True)
