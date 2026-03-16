@@ -1497,6 +1497,16 @@ class AgentLoop:
             elif active_skill and active_skill.mode == "plan":
                 use_plan_mode = True
 
+            # Resume the persisted mode pipeline on follow-up after cancel.
+            # The conversation history already has the prior tool calls/results,
+            # so the LLM will pick up where it left off rather than re-exploring.
+            if not (use_research_mode or use_exploration_mode or use_plan_mode or cmd.direct_command):
+                persisted = self.session.metadata.get("active_mode", "")
+                if persisted == "research":
+                    use_research_mode = True
+                elif persisted == "exploration":
+                    use_exploration_mode = True
+
             self.session.add_message(Message(role=Role.USER, content=user_message))
             system_prompt = minify_text(self._build_system_prompt())
             tools_schema = self._build_tools_schema(active_skill, use_exploration_mode, use_research_mode)
@@ -1513,6 +1523,7 @@ class AgentLoop:
                 # Mode completed normally — clear so follow-ups don't
                 # keep re-including mode tools.
                 self.session.metadata.pop("active_mode", None)
+                self.session.metadata.pop("mode_phase", None)
                 return
 
             if use_exploration_mode:
@@ -1525,6 +1536,7 @@ class AgentLoop:
                     explore_only=explore_only,
                 )
                 self.session.metadata.pop("active_mode", None)
+                self.session.metadata.pop("mode_phase", None)
                 return
 
             if use_plan_mode or self.plan_mode:

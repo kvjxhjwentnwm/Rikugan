@@ -14,6 +14,7 @@ from ...core.types import Message, Role
 from ..exploration_mode import ExplorationState, KnowledgeBase
 from ..subagent import SubagentRunner
 from ..turn import TurnEvent
+from .phase_tracker import ModePhaseTracker
 from .turn_helpers import execute_single_turn
 
 if TYPE_CHECKING:
@@ -377,10 +378,12 @@ def run_research_mode(
 ) -> Generator[TurnEvent, None, None]:
     """Run the agent in research mode: explore, then write notes.
 
-    Phase 1: Inline exploration (like /explore) — analyze binary, gather findings
-    Phase 2: Note writing — inject KB summary, agent writes research_note calls
-    Phase 3: Index generation — build notes/index.md
+    Uses :class:`ModePhaseTracker` so that on cancel + resume the pipeline
+    skips to the phase that was interrupted.  The conversation history has
+    all prior tool calls/results — the LLM picks up where it left off.
     """
+    tracker = ModePhaseTracker(loop, phases=["explore", "document", "index"])
+
     # Determine notes directory — next to the binary/IDB
     idb_dir = ""
     if loop.session.idb_path:
@@ -405,37 +408,45 @@ def run_research_mode(
     loop._exploration_state = explore_state
 
     research_system = system_prompt + RESEARCH_SYSTEM_ADDENDUM
-    log_info(f"Research mode started: goal={user_message[:80]!r}")
-    yield TurnEvent.exploration_phase_change("", "explore", f"Starting research: {user_message[:60]}")
+    log_info(f"Research mode started: goal={user_message[:80]!r}, resuming={tracker.is_resuming}")
 
-    # Phase 1: EXPLORE — inline exploration to gather findings
-    from .exploration import _run_phase1_inline
+    # ------------------------------------------------------------------
+    # Phase 1: EXPLORE
+    # ------------------------------------------------------------------
+    if tracker.should_run("explore"):
+        tracker.enter("explore")
+        yield TurnEvent.exploration_phase_change("", "explore", f"Starting research: {user_message[:60]}")
 
-    yield from _run_phase1_inline(loop, explore_state, research_system, tools_schema, explore_only=True)
+        from .exploration import _run_phase1_inline
 
-    # Merge exploration KB into research state
-    research_state.knowledge_base = explore_state.knowledge_base
-    research_state.knowledge_base.user_goal = user_message
+        yield from _run_phase1_inline(loop, explore_state, research_system, tools_schema, explore_only=True)
 
-    # Check if exploration actually ran (agent made tool calls).
-    # If the agent just asked a clarification question and exited on turn 1
-    # with no tool calls, skip note-writing — there's nothing to document.
-    if explore_state.explore_turns < 2:
-        log_info("Research mode: exploration ended too early, skipping note-writing")
-        loop._research_state = None
-        loop._clear_exploration_state()
-        return
+        # Merge exploration KB into research state
+        research_state.knowledge_base = explore_state.knowledge_base
+        research_state.knowledge_base.user_goal = user_message
 
-    # Phase 2: WRITE NOTES — agent writes research_note calls
-    # Always proceed here regardless of KB state — the agent's conversation
-    # context has all the analysis (decompilations, strings, xrefs) from
-    # Phase 1. The KB summary is a bonus, not a requirement.
-    log_info("Research mode: entering note-writing phase")
-    yield TurnEvent.exploration_phase_change("explore", "document", "Exploration complete. Writing research notes...")
+        # Check if exploration actually ran (agent made tool calls).
+        if explore_state.explore_turns < 2:
+            log_info("Research mode: exploration ended too early, skipping note-writing")
+            loop._research_state = None
+            loop._clear_exploration_state()
+            tracker.complete()
+            return
 
-    yield from _run_note_writing_phase(loop, research_state, system_prompt, tools_schema)
+    # ------------------------------------------------------------------
+    # Phase 2: WRITE NOTES
+    # ------------------------------------------------------------------
+    if tracker.should_run("document"):
+        tracker.enter("document")
+        log_info("Research mode: entering note-writing phase")
+        yield TurnEvent.exploration_phase_change("explore", "document", "Exploration complete. Writing research notes...")
 
+        yield from _run_note_writing_phase(loop, research_state, system_prompt, tools_schema)
+
+    # ------------------------------------------------------------------
     # Phase 3: Generate index
+    # ------------------------------------------------------------------
+    tracker.enter("index")
     binary_name = os.path.basename(loop.session.idb_path) if loop.session.idb_path else "unknown"
 
     if research_state.notes_written:
@@ -467,5 +478,6 @@ def run_research_mode(
     yield TurnEvent.text_done(summary_msg)
 
     log_info(f"Research mode finished: {note_count} notes")
+    tracker.complete()
     loop._research_state = None
     loop._clear_exploration_state()
