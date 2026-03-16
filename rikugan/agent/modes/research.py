@@ -415,7 +415,8 @@ def run_research_mode(
     # ------------------------------------------------------------------
     if tracker.should_run("explore"):
         tracker.enter("explore")
-        yield TurnEvent.exploration_phase_change("", "explore", f"Starting research: {user_message[:60]}")
+        if not tracker.is_continuing("explore"):
+            yield TurnEvent.exploration_phase_change("", "explore", f"Starting research: {user_message[:60]}")
 
         from .exploration import _run_phase1_inline
 
@@ -439,7 +440,8 @@ def run_research_mode(
     if tracker.should_run("document"):
         tracker.enter("document")
         log_info("Research mode: entering note-writing phase")
-        yield TurnEvent.exploration_phase_change("explore", "document", "Exploration complete. Writing research notes...")
+        if not tracker.is_continuing("document"):
+            yield TurnEvent.exploration_phase_change("explore", "document", "Exploration complete. Writing research notes...")
 
         yield from _run_note_writing_phase(loop, research_state, system_prompt, tools_schema)
 

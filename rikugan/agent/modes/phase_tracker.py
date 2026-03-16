@@ -2,7 +2,8 @@
 
 Any multi-phase mode (research, exploration, etc.) can use ``ModePhaseTracker``
 to persist the current phase in ``session.metadata``.  On cancel + resume, the
-tracker tells the mode which phases to skip.
+tracker tells the mode which phases to skip and whether the current phase is
+being continued (so the mode can suppress duplicate phase banners).
 
 Usage::
 
@@ -10,14 +11,14 @@ Usage::
 
     if tracker.should_run("explore"):
         tracker.enter("explore")
+        if not tracker.is_continuing("explore"):
+            yield TurnEvent.exploration_phase_change(...)
         yield from _run_explore(...)
 
     if tracker.should_run("document"):
         tracker.enter("document")
+        yield TurnEvent.exploration_phase_change(...)
         yield from _run_document(...)
-
-    tracker.enter("index")
-    _generate_index(...)
 
     tracker.complete()
 """
@@ -41,8 +42,9 @@ class ModePhaseTracker:
         The ``AgentLoop`` instance (provides access to ``session.metadata``).
     phases:
         Ordered list of phase names.  The order determines which phases are
-        skipped on resume — the interrupted phase and all phases before it
-        are skipped (their partial results are in the conversation history).
+        skipped on resume — phases *before* the interrupted phase are skipped,
+        the interrupted phase is re-entered (continued), and later phases run
+        normally.
     """
 
     def __init__(self, loop: AgentLoop, phases: list[str]) -> None:
@@ -69,9 +71,9 @@ class ModePhaseTracker:
     def should_run(self, phase: str) -> bool:
         """Return ``True`` if *phase* should execute.
 
-        The interrupted phase and all phases before it are skipped — they
-        already ran (partially) and their results are in the conversation
-        history.  Execution resumes at the *next* phase.
+        Phases before the interrupted phase are skipped.  The interrupted
+        phase itself is re-entered (the LLM continues from conversation
+        history).  Later phases run normally.
         """
         if not self._resume_phase:
             return True  # fresh start — run everything
@@ -80,7 +82,15 @@ class ModePhaseTracker:
             phase_idx = self._phases.index(phase)
         except ValueError:
             return True  # unknown phase — run it to be safe
-        return phase_idx > resume_idx
+        return phase_idx >= resume_idx
+
+    def is_continuing(self, phase: str) -> bool:
+        """Return ``True`` if *phase* is being continued after a cancel.
+
+        Use this to suppress duplicate phase banners — the phase was already
+        announced before the cancel, so re-announcing it would be confusing.
+        """
+        return self._resume_phase == phase
 
     def enter(self, phase: str) -> None:
         """Mark *phase* as the currently active phase.

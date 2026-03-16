@@ -401,7 +401,8 @@ def run_exploration_mode(
     # ------------------------------------------------------------------
     if tracker.should_run("explore"):
         tracker.enter("explore")
-        yield TurnEvent.exploration_phase_change("", "explore", f"Starting exploration: {user_message[:60]}")
+        if not tracker.is_continuing("explore"):
+            yield TurnEvent.exploration_phase_change("", "explore", f"Starting exploration: {user_message[:60]}")
 
         if not explore_only:
             yield from _run_phase1_subagent(loop, state, user_message, exploration_system)
