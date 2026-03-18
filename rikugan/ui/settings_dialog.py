@@ -276,6 +276,16 @@ class SettingsDialog(QDialog):
         key_layout.addWidget(self._auth_status)
         provider_form.addRow("API Key:", key_layout)
 
+        # OAuth checkbox — controls keychain autoload
+        self._oauth_cb = QCheckBox("Use OAuth from Claude Code (macOS Keychain)")
+        self._oauth_cb.setChecked(self._config.oauth_consent_accepted)
+        self._oauth_cb.setToolTip(
+            "Auto-load your Claude Code OAuth token from the macOS Keychain.\n"
+            "Requires accepting Anthropic's credential use policy."
+        )
+        self._oauth_cb.toggled.connect(self._on_oauth_toggled)
+        provider_form.addRow("", self._oauth_cb)
+
         self._api_base_edit = QLineEdit(self._config.provider.api_base)
         self._api_base_edit.setPlaceholderText("Custom endpoint URL (optional)")
         provider_form.addRow("API Base:", self._api_base_edit)
@@ -498,6 +508,9 @@ class SettingsDialog(QDialog):
         if provider == "ollama" and not self._api_base_edit.text().strip():
             self._api_base_edit.setText(_PROVIDER_BASES["ollama"])
 
+        # OAuth checkbox only visible for Anthropic
+        self._oauth_cb.setVisible(provider == "anthropic")
+
         # Update placeholder
         if provider == "anthropic":
             self._api_key_edit.setPlaceholderText("sk-... or leave empty for OAuth auto-detect")
@@ -515,6 +528,25 @@ class SettingsDialog(QDialog):
         self._model_restore_hint = self._get_selected_model_id()
         self._update_auth_status()
         self._fetch_models()
+
+    def _on_oauth_toggled(self, checked: bool) -> None:
+        """Handle the OAuth checkbox toggle."""
+        if checked and not self._config.oauth_consent_accepted:
+            from .oauth_consent import show_oauth_consent
+
+            choice = show_oauth_consent(parent=self)
+            if choice != "accept":
+                # User declined — uncheck without recursion
+                self._oauth_cb.blockSignals(True)
+                self._oauth_cb.setChecked(False)
+                self._oauth_cb.blockSignals(False)
+                return
+        # Update consent and refresh auth status
+        from ..providers.auth_cache import invalidate_cache, set_keychain_consent
+
+        set_keychain_consent(checked)
+        invalidate_cache()
+        self._update_auth_status()
 
     # --- Auth status ---
 
@@ -714,6 +746,7 @@ class SettingsDialog(QDialog):
         self._config.max_retries = self._max_retries_spin.value()
         self._config.silent_retry_mode = self._silent_retry_cb.isChecked()
         self._config.preserve_context = self._preserve_context_cb.isChecked()
+        self._config.oauth_consent_accepted = self._oauth_cb.isChecked()
 
         # Apply new tab settings
         self._skills_tab.apply_to_config(self._config)

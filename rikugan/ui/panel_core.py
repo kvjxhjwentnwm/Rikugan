@@ -295,6 +295,8 @@ class RikuganPanelCore(QWidget):
         else:
             # "api_key" or "cancel" — don't autoload from keychain
             set_keychain_consent(False)
+            # Open settings so the user can enter an API key
+            QTimer.singleShot(500, self._on_settings)
 
     def _ensure_skills_refresh_timer(self) -> None:
         """Refresh skill autocomplete once background discovery completes."""

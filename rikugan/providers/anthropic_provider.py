@@ -107,7 +107,13 @@ class AnthropicProvider(LLMProvider):
         model: str = "claude-sonnet-4-20250514",
         **kwargs,
     ):
-        token, self._auth_type = resolve_anthropic_auth(api_key)
+        if api_key:
+            token, self._auth_type = resolve_anthropic_auth(api_key)
+        else:
+            # Go through the cache, which respects OAuth consent.
+            from .auth_cache import resolve_auth_cached
+
+            token, self._auth_type = resolve_auth_cached()
         super().__init__(api_key=token, api_base=api_base, model=model)
 
     def _get_client(self):
