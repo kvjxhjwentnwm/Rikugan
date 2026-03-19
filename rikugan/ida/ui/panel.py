@@ -10,6 +10,7 @@ from rikugan.ui.qt_compat import QT_BINDING, QVBoxLayout, QWidget
 
 from .actions import RikuganUIHooks
 from .session_controller import IdaSessionController
+from .tools_form import RikuganToolsForm
 
 idaapi = importlib.import_module("idaapi")
 
@@ -42,6 +43,7 @@ class RikuganPanel(idaapi.PluginForm):
         self._core = RikuganPanelCore(
             controller_factory=IdaSessionController,
             ui_hooks_factory=lambda panel_getter: RikuganUIHooks(panel_getter=panel_getter),
+            tools_form_factory=lambda tools_widget: RikuganToolsForm(tools_widget),
             parent=self._root,
         )
         root_layout.addWidget(self._core)
@@ -50,6 +52,7 @@ class RikuganPanel(idaapi.PluginForm):
         self.shutdown()
         if self._root is not None:
             self._root.setParent(None)
+            self._root.deleteLater()
             self._root = None
 
     def show(self):
@@ -65,6 +68,7 @@ class RikuganPanel(idaapi.PluginForm):
         if self._core is not None:
             self._core.shutdown()
             self._core.setParent(None)
+            self._core.deleteLater()
             self._core = None
 
     def prefill_input(self, text: str, auto_submit: bool = False) -> None:
