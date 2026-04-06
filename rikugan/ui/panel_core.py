@@ -37,6 +37,8 @@ from .qt_compat import (
     QToolButton,
     QVBoxLayout,
     QWidget,
+    qt_flags,
+    qt_run,
 )
 from .styles import DARK_THEME
 from .tool_widgets import _SharedSpinnerTimer
@@ -202,7 +204,7 @@ class _AddButtonTabBar(QTabBar):
         menu = QMenu(self)
         export_action = menu.addAction("Export Chat")
         fork_action = menu.addAction("Fork Session")
-        action = menu.exec_(self.mapToGlobal(pos))
+        action = qt_run(menu, self.mapToGlobal(pos))
         if action == export_action and self._export_tab_callback is not None:
             self._export_tab_callback(index)
         elif action == fork_action and self._fork_tab_callback is not None:
@@ -290,13 +292,16 @@ class RikuganPanelCore(QWidget):
             pw_edit.setPlaceholderText("Password")
             layout.addWidget(pw_edit)
             buttons = QDialogButtonBox(
-                QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel,
+                qt_flags(
+                    QDialogButtonBox.StandardButton.Ok,
+                    QDialogButtonBox.StandardButton.Cancel,
+                ),
             )
             buttons.accepted.connect(dlg.accept)
             buttons.rejected.connect(dlg.reject)
             layout.addWidget(buttons)
 
-            if dlg.exec_() != QDialog.DialogCode.Accepted:
+            if qt_run(dlg) != QDialog.DialogCode.Accepted:
                 break  # user cancelled — keys stay empty
             if self._config.decrypt_stored_keys(pw_edit.text()):
                 log_debug("API keys decrypted successfully")
@@ -635,11 +640,16 @@ class RikuganPanelCore(QWidget):
             cb = QCheckBox(f"Include subagent logs ({len(session.subagent_logs)} subagent runs)")
             cb.setChecked(True)
             layout.addWidget(cb)
-            buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+            buttons = QDialogButtonBox(
+                qt_flags(
+                    QDialogButtonBox.StandardButton.Ok,
+                    QDialogButtonBox.StandardButton.Cancel,
+                )
+            )
             buttons.accepted.connect(dlg.accept)
             buttons.rejected.connect(dlg.reject)
             layout.addWidget(buttons)
-            if not dlg.exec():
+            if not qt_run(dlg):
                 return
             include_subagents = cb.isChecked()
 
@@ -886,7 +896,7 @@ class RikuganPanelCore(QWidget):
                 registry=self._ctrl.provider_registry,
                 tool_registry=self._ctrl.tool_registry,
             )
-            result = dlg.exec_()
+            result = qt_run(dlg)
             if result:
                 self._config.save(password=dlg.encryption_password)
                 self._ctrl.update_settings()
@@ -918,7 +928,7 @@ class RikuganPanelCore(QWidget):
         )
         no_btn = dlg.addButton("No", QMessageBox.ButtonRole.RejectRole)
         dlg.setDefaultButton(no_btn)
-        dlg.exec_()
+        qt_run(dlg)
         clicked = dlg.clickedButton()
         if clicked is clear_btn:
             return "clear"

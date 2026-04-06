@@ -159,5 +159,36 @@ else:
     )
 
 
+def qt_flags(*flags: object) -> object:
+    """Combine Qt enum/flag values without relying on PyQt5 shim bitwise behavior."""
+    if not flags:
+        return 0
+
+    value = 0
+    flag_type = None
+    for flag in flags:
+        if flag_type is None:
+            flag_type = type(flag)
+        value |= int(getattr(flag, "value", flag))
+
+    if flag_type is not None:
+        try:
+            return flag_type(value)
+        except Exception:
+            pass
+    return value
+
+
+def qt_run(obj: object, *args, **kwargs) -> object:
+    """Call Qt6-style run API with Qt5 fallback where needed."""
+    run = getattr(obj, "exec", None)
+    if callable(run):
+        return run(*args, **kwargs)
+    run_legacy = getattr(obj, "exec_", None)
+    if callable(run_legacy):
+        return run_legacy(*args, **kwargs)
+    raise AttributeError(f"{type(obj).__name__} has no exec/exec_ method")
+
+
 def is_pyside6() -> bool:
     return QT_BINDING == "PySide6"

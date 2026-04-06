@@ -23,6 +23,7 @@ from .qt_compat import (
     QVBoxLayout,
     QWidget,
     Signal,
+    qt_flags,
 )
 
 _BTN_STYLE = (
@@ -410,35 +411,35 @@ class BulkRenamerWidget(QWidget):
             check_item.setCheckState(
                 Qt.CheckState.Checked if (is_auto and not entry.is_import) else Qt.CheckState.Unchecked
             )
-            check_item.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
+            check_item.setFlags(qt_flags(Qt.ItemFlag.ItemIsUserCheckable, Qt.ItemFlag.ItemIsEnabled))
             self._table.setItem(row, _COL_CHECK, check_item)
 
             # Address (numeric sort, store address in UserRole for lookup)
             addr_item = _NumericTableItem(f"0x{entry.address:X}", entry.address)
-            addr_item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+            addr_item.setFlags(qt_flags(Qt.ItemFlag.ItemIsEnabled, Qt.ItemFlag.ItemIsSelectable))
             addr_item.setData(Qt.ItemDataRole.UserRole, entry.address)
             addr_item.setToolTip(f"0x{entry.address:016X}")
             self._table.setItem(row, _COL_ADDR, addr_item)
 
             # Current name
             name_item = QTableWidgetItem(entry.name)
-            name_item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+            name_item.setFlags(qt_flags(Qt.ItemFlag.ItemIsEnabled, Qt.ItemFlag.ItemIsSelectable))
             self._table.setItem(row, _COL_NAME, name_item)
 
             # Length (numeric sort)
             length_item = _NumericTableItem(str(ic) if ic else "0", ic)
-            length_item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
-            length_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            length_item.setFlags(qt_flags(Qt.ItemFlag.ItemIsEnabled, Qt.ItemFlag.ItemIsSelectable))
+            length_item.setTextAlignment(qt_flags(Qt.AlignmentFlag.AlignRight, Qt.AlignmentFlag.AlignVCenter))
             self._table.setItem(row, _COL_LENGTH, length_item)
 
             # New name (initially empty)
             new_item = QTableWidgetItem("")
-            new_item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+            new_item.setFlags(qt_flags(Qt.ItemFlag.ItemIsEnabled, Qt.ItemFlag.ItemIsSelectable))
             self._table.setItem(row, _COL_NEWNAME, new_item)
 
             # Status
             status_item = QTableWidgetItem("")
-            status_item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
+            status_item.setFlags(qt_flags(Qt.ItemFlag.ItemIsEnabled, Qt.ItemFlag.ItemIsSelectable))
             self._table.setItem(row, _COL_STATUS, status_item)
 
     def _finish_load(self) -> None:
