@@ -22,7 +22,7 @@ curl -fsSL https://raw.githubusercontent.com/buzzer-re/Rikugan/main/install.sh |
 irm https://raw.githubusercontent.com/buzzer-re/Rikugan/main/install.ps1 | iex
 ```
 
-***Windows users should also install the latest [Microsoft Visual C++ Redistributable 2015-2022 x64](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-supported-redistributable-version) before launching IDA. Rikugan uses IDA's bundled PySide6/Shiboken Qt bindings, and an outdated VC++ Runtime can crash it during starting.***
+***Windows users should also install the latest [Microsoft Visual C++ Redistributable 2015-2022 x64](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#latest-supported-redistributable-version) before launching IDA. Rikugan uses IDA's bundled PySide6/Shiboken Qt bindings, and an outdated VC++ Runtime can cause it to crash during startup.***
 
 For host-specific install, manual setup, and configuration, see the [docs](https://rikugan.reversing.codes/docs.html).
 
