@@ -7,12 +7,19 @@ from typing import Any
 
 from ..core.errors import ProviderError
 from ..core.logging import log_debug
-from ..core.types import ModelInfo, ProviderCapabilities
+from ..core.types import ModelInfo
+from ..core.types import ProviderCapabilities
 from .openai_provider import OpenAIProvider
 
 
 class OpenAICompatProvider(OpenAIProvider):
     """Provider that speaks the OpenAI API protocol against a custom base URL."""
+
+    _COMPAT_HEADERS = {
+        # Some OpenAI-compatible gateways block the default OpenAI SDK
+        # user agent but allow requests-like traffic.
+        "User-Agent": "python-requests/2.31.0",
+    }
 
     def __init__(
         self,
@@ -44,6 +51,7 @@ class OpenAICompatProvider(OpenAIProvider):
                 kwargs["api_key"] = "no-key"
             if self.api_base:
                 kwargs["base_url"] = self.api_base
+            kwargs["default_headers"] = dict(self._COMPAT_HEADERS)
             self._client = openai.OpenAI(**kwargs)
         return self._client
 
